@@ -1,3 +1,5 @@
+#github.com/johnnyqdp
+
 import csv
 import fileinput
 import os
@@ -6,21 +8,22 @@ from scipy import signal
 import fileinput
 from shutil import copyfile
 
+########## VARIÁVEIS: ##########
 
-#Esse código pega um arquivo pupil_positions e gera esse arquivo de saida:
-#diameter_3d_filtrado.csv - arquivo só com a coluna diameter3d, com o filtro de mediana aplicado nos valores
+#TAMANHO DO FILTRO (tem que ser ímpar): /// ENGLISH: Median filter window size (needs to be odd)
+size=15
 
-#TAMANHO DO FILTRO:
-size=14
-#DELETAR TODOS OS VALORES 0?
-deletezero = True
+#DELETAR TODOS OS VALORES IGUAIS A 0? (acho melhor deixar em False) /// ENGLISH: Delete all values == 0?
+deletezero = False
 
+#Modificar a separação de casas decimais do arquivo final de . para ,?
+#(Isso é útil pra abrir o arquivo no excel) /// ENGLISH: English speaking users just change it to False
+excel = True
+
+
+#Esse código pega um arquivo pupil_positions.csv e gera esse arquivo de saida:
+#diameter_3d_filtrado.csv - arquivo com a coluna diameter3d, com o filtro de mediana aplicado nos valores
 #######################################################################################################
-
-#ESSA PARTE SERVE PARA PEGAR UM ARQUIVO pupil_positions.csv E GERAR UM ARQUIVO 
-#diameter_3d.csv QUE POSSUI APENAS OS VALORES DA COLUNA diameter_3d DO PRIMEIRO ARQUIVO
-#Para poder aplicar o filtro de mediana
-
 
 #Removendo as colunas indesejadas do arquivo pupil_capture, para deixar apenas a diameter_3d
 de = 0
@@ -46,37 +49,34 @@ if deletezero:
         for line in file:
             print(line.replace('0.0', '\n'), end='')
 
-#Remover todos os \n
+#Removendo todos os \n
 with open('deletarIssoAquiTambem.csv') as infile, open('diameter_3d.csv', 'w') as outfile:
     for line in infile:
         if not line.strip(): continue  
         outfile.write(line)  
 
-#######################################################################################################
-
-#AGORA ESSA PARTE VAI PEGAR O ARQUIVO diameter_3d.csv GERADO E CRIAR UM ARQUIVO diameter_3d_filtrado.csv 
-#COM O FILTRO DE MEDIANA APLICADO!
-
-
+#Agora... aplicar o filtro de mediana:
 entrada = genfromtxt("diameter_3d.csv", delimiter='\n')
 saida = signal.medfilt(entrada, kernel_size=size)
 
-#Gerar Resultado:
+#Gerar Resultado (apenas imprimindo o array "saida"):
 l = list(saida)
 file = open("diameter_3d_filtrado.csv", "w+")
 wr = csv.writer(file, delimiter='\n')
 wr.writerow(l)
 file.close()
 
+#Deletando as besteiras:
 os.remove("deletarIssoAqui.csv")
 os.remove("deletarIssoAquiTambem.csv")
 os.remove("diameter_3d.csv")
 
 #AGORA, AS CASAS DECIMAIS DE AMBOS OS ARQUIVOS GERADOS SERÃO MODIFICADAS DE . PARA ,
 #PARA O EXCEL RECONHECER AUTOMATICAMENTE
-with fileinput.FileInput("diameter_3d_filtrado.csv", inplace=True) as file:
-    for line in file:
-        print(line.replace('.', ','), end='')
+if excel:
+    with fileinput.FileInput("diameter_3d_filtrado.csv", inplace=True) as file:
+        for line in file:
+            print(line.replace('.', ','), end='')
 
-
+#Aí sim :D
 print('Processo Finalizado!')
